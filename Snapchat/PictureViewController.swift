@@ -16,24 +16,28 @@ class PictureViewController: UIViewController, UIImagePickerControllerDelegate, 
     @IBOutlet weak var descriptionTextField: UITextField!
     
     var imagePicker = UIImagePickerController()
+    
+    var uuid = NSUUID().uuidString
 
     override func viewDidLoad() {
         super.viewDidLoad()
 
         // Do any additional setup after loading the view.
         imagePicker.delegate = self
+        nextButton.isEnabled = false
     }
     
     func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [String : Any]) {
         let image = info[UIImagePickerControllerOriginalImage] as! UIImage
         imageView.image = image
         imageView.backgroundColor = UIColor.clear
+        nextButton.isEnabled = true
         imagePicker.dismiss(animated: true, completion: nil)
     }
 
     @IBAction func cameraTapped(_ sender: Any) {
         present(imagePicker, animated: true, completion: nil)
-        imagePicker.sourceType = .savedPhotosAlbum
+        imagePicker.sourceType = .camera
         imagePicker.allowsEditing = false
     }
     
@@ -47,21 +51,26 @@ class PictureViewController: UIViewController, UIImagePickerControllerDelegate, 
         let imageData = UIImageJPEGRepresentation(imageView.image!, 0.1)!
         
         //imagesFolder.child("images.png").putData(imageData, metadata: nil, completion: )
-        imagesFolder.child("\(NSUUID().uuidString).jpg").putData(imageData, metadata: nil, completion: {(metadata, error) in
+        imagesFolder.child("\(uuid).jpg").putData(imageData, metadata: nil, completion: {(metadata, error) in
             
             print("Tried to upload")
             if error != nil {
                 print("Error: \(error)")
             } else {
                 print(metadata?.downloadURL())
-                self.performSegue(withIdentifier: "selectUserSegue", sender: nil)
+                self.performSegue(withIdentifier: "selectUserSegue", sender: metadata?.downloadURL()!.absoluteString)
             }
         })
 
     }
     
     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
-           }
+        let nextVC = segue.destination as! SelectUserViewController
+        nextVC.imageURL = sender as! String
+        nextVC.snapDescription = descriptionTextField.text!
+        nextVC.uuid = uuid
+    
+    }
     
 
 }
